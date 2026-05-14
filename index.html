@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iron Log — Home Workout Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0d0f;--bg2:#141416;--bg3:#1c1c20;--bg4:#242428;
+    --border:#2a2a2e;--border2:#3a3a3f;
+    --text:#f0ede8;--text2:#9a9791;--text3:#5c5a56;
+    --accent:#e8ff47;--accent2:#c8df20;
+    --blue:#3d9aff;--green:#3ddf82;--orange:#ff8c3d;--red:#ff4d4d;--purple:#a87dff;
+    --font-display:'Barlow Condensed',sans-serif;
+    --font-body:'Barlow',sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+
+  /* SETUP SCREEN */
+  .setup-screen{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+  .setup-card{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:36px 40px;max-width:540px;width:100%;margin:auto}
+  .setup-logo{font-family:var(--font-display);font-size:32px;font-weight:800;color:var(--accent);letter-spacing:.04em}
+  .setup-logo span{color:var(--text2);font-size:13px;font-weight:400;display:block;letter-spacing:.1em;margin-top:2px;text-transform:uppercase}
+  .setup-title{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text);margin:24px 0 6px;letter-spacing:.03em}
+  .setup-sub{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:18px}
+  .setup-sub strong{color:var(--text);font-weight:500}
+  .setup-steps{margin:0 0 18px;display:flex;flex-direction:column;gap:10px}
+  .setup-step{display:flex;gap:12px;align-items:flex-start}
+  .setup-step-num{width:22px;height:22px;border-radius:50%;background:rgba(232,255,71,.12);border:1px solid rgba(232,255,71,.25);color:var(--accent);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+  .setup-step-text{font-size:12px;color:var(--text2);line-height:1.65}
+  .setup-step-text a{color:var(--blue);text-decoration:none}
+  .setup-step-text a:hover{text-decoration:underline}
+  .setup-step-text strong{color:var(--text);font-weight:500}
+  .setup-input-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+  .setup-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:var(--font-body);outline:none;transition:border-color .15s;margin-bottom:12px}
+  .setup-input:focus{border-color:rgba(232,255,71,.4)}
+  .setup-input::placeholder{color:var(--text3)}
+  .setup-btn{width:100%;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#0d0d0f;font-family:var(--font-display);font-size:17px;font-weight:700;letter-spacing:.05em;cursor:pointer;transition:all .15s}
+  .setup-btn:hover{background:var(--accent2);transform:translateY(-1px)}
+  .setup-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .setup-divider{display:flex;align-items:center;gap:12px;margin:14px 0;color:var(--text3);font-size:12px}
+  .setup-divider::before,.setup-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+  .setup-btn-alt{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all .15s}
+  .setup-btn-alt:hover{background:var(--bg3);color:var(--text)}
+  .setup-error{background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.3);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--red);margin-top:10px;display:none}
+  .setup-note{background:rgba(61,154,255,.08);border:1px solid rgba(61,154,255,.2);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--blue);margin-bottom:14px;line-height:1.6}
+
+  /* MAIN APP */
+  .app{display:flex;height:100vh;overflow:hidden}
+
+  /* SIDEBAR */
+  .sidebar{width:270px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+  .sidebar-header{padding:18px 18px 13px;border-bottom:1px solid var(--border)}
+  .logo{font-family:var(--font-display);font-size:25px;font-weight:800;letter-spacing:.04em;color:var(--accent);line-height:1}
+  .logo span{color:var(--text2);font-weight:400;font-size:11px;display:block;margin-top:2px;letter-spacing:.1em;text-transform:uppercase}
+  .week-control{display:flex;align-items:center;gap:6px;margin-top:11px}
+  .wk-btn{width:26px;height:26px;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;font-size:14px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+  .wk-btn:hover{background:var(--bg3);color:var(--text)}
+  .week-label{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--text);flex:1;text-align:center;letter-spacing:.05em}
+  .week-tip{font-size:11px;color:var(--text3);padding:7px 18px;line-height:1.5;border-bottom:1px solid var(--border);background:var(--bg3)}
+  .week-tip strong{color:var(--accent);font-weight:500}
+  .sync-bar{padding:7px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+  .sync-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .sync-dot.synced{background:var(--green)}
+  .sync-dot.syncing{background:var(--accent);animation:blink .8s ease-in-out infinite}
+  .sync-dot.error{background:var(--red)}
+  .sync-dot.offline{background:var(--text3)}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .sync-text{font-size:10px;color:var(--text3);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .icon-btn{background:transparent;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:2px 4px;transition:color .15s;flex-shrink:0}
+  .icon-btn:hover{color:var(--text2)}
+  .icon-btn.danger:hover{color:var(--red)}
+  .day-list{flex:1;overflow-y:auto;padding:6px 0}
+  .day-list::-webkit-scrollbar{width:3px}
+  .day-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .day-btn{width:100%;padding:11px 18px;background:transparent;border:none;cursor:pointer;text-align:left;border-left:3px solid transparent;transition:all .15s;display:flex;align-items:center;gap:11px}
+  .day-btn:hover{background:var(--bg3)}
+  .day-btn.active{background:var(--bg3);border-left-color:var(--accent)}
+  .day-btn.done{border-left-color:var(--green)}
+  .day-btn.rest-btn{opacity:.55}
+  .day-dot{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.04em;flex-shrink:0}
+  .day-dot.blue{background:rgba(61,154,255,.15);color:var(--blue)}
+  .day-dot.teal{background:rgba(61,223,130,.15);color:var(--green)}
+  .day-dot.gray{background:var(--bg4);color:var(--text3)}
+  .day-dot.purple{background:rgba(168,125,255,.15);color:var(--purple)}
+  .day-dot.coral{background:rgba(255,140,61,.15);color:var(--orange)}
+  .day-info{flex:1;min-width:0}
+  .day-info-label{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--text);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .day-info-sub{font-size:10px;color:var(--text3);margin-top:1px}
+  .day-progress-mini{width:32px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;flex-shrink:0}
+  .day-progress-mini-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+
+  /* MAIN */
+  .main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+  .main::-webkit-scrollbar{width:5px}
+  .main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  .topbar{padding:16px 28px 13px;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--bg);z-index:10;flex-wrap:wrap}
+  .day-title{font-family:var(--font-display);font-size:32px;font-weight:800;letter-spacing:.04em;color:var(--text);line-height:1}
+  .day-subtitle{font-size:12px;color:var(--text2);margin-top:3px}
+  .topbar-right{display:flex;align-items:center;gap:9px}
+  .progress-pill{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 11px;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--text2);letter-spacing:.04em}
+  .progress-pill span{color:var(--accent)}
+  .reset-btn{background:transparent;border:1px solid var(--border2);border-radius:7px;padding:5px 11px;font-size:11px;color:var(--text3);cursor:pointer;font-family:var(--font-body);transition:all .15s}
+  .reset-btn:hover{border-color:var(--red);color:var(--red)}
+  .main-progress{height:3px;background:var(--bg3);flex-shrink:0}
+  .main-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .4s cubic-bezier(.4,0,.2,1)}
+  .content{padding:20px 28px 40px;flex:1}
+
+  /* WARMUP */
+  .warmup-bar{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+  .warmup-label{font-family:var(--font-display);font-size:11px;font-weight:700;color:var(--orange);letter-spacing:.1em;text-transform:uppercase;flex-shrink:0}
+  .warmup-tags{display:flex;flex-wrap:wrap;gap:5px}
+  .warmup-tag{font-size:10px;color:var(--text3);padding:2px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:20px}
+  .section-title{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin:20px 0 8px;display:flex;align-items:center;gap:8px}
+  .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+  /* EXERCISE CARD */
+  .ex-card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;overflow:hidden;transition:border-color .2s}
+  .ex-card.ex-done{border-color:rgba(61,223,130,.28)}
+  .ex-card-header{padding:12px 14px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .ex-name{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--text);letter-spacing:.02em;line-height:1.1}
+  .ex-tags{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
+  .ex-tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;letter-spacing:.03em}
+  .ex-tag.muscle{background:rgba(61,154,255,.1);color:var(--blue)}
+  .ex-tag.scheme{background:var(--bg4);color:var(--text3);border:1px solid var(--border)}
+  .ex-tag.new-tag{background:rgba(61,223,130,.1);color:var(--green)}
+  .ex-note{font-size:11px;color:var(--text3);font-style:italic;margin-top:3px;line-height:1.5}
+  .ex-done-badge{width:24px;height:24px;background:rgba(61,223,130,.12);border:1px solid rgba(61,223,130,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:11px;flex-shrink:0;opacity:0;transition:opacity .2s}
+  .ex-card.ex-done .ex-done-badge{opacity:1}
+  .sets-area{padding:0 14px 12px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .set-btn{width:44px;height:44px;border-radius:9px;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);font-family:var(--font-display);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;letter-spacing:.04em}
+  .set-btn:hover{background:var(--bg4);color:var(--text2);transform:translateY(-1px)}
+  .set-btn.done{background:rgba(61,154,255,.1);border-color:rgba(61,154,255,.3);color:var(--blue)}
+  .set-btn.all-done{background:rgba(61,223,130,.08);border-color:rgba(61,223,130,.3);color:var(--green)}
+  .set-btn-num{font-size:14px}
+  .set-btn-label{font-size:9px;font-weight:400;opacity:.55;letter-spacing:.05em}
+
+  /* STATS */
+  .stat-row{display:flex;gap:9px;margin-bottom:18px;flex-wrap:wrap}
+  .stat-card{flex:1;min-width:85px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 12px}
+  .stat-val{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--text);letter-spacing:.02em}
+  .stat-label{font-size:10px;color:var(--text3);margin-top:1px;letter-spacing:.05em;text-transform:uppercase}
+
+  /* REST DAY */
+  .rest-day-view{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 28px;text-align:center}
+  .rest-icon{font-size:48px;margin-bottom:12px;opacity:.35}
+  .rest-day-title{font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--text);margin-bottom:5px;letter-spacing:.04em}
+  .rest-day-sub{font-size:13px;color:var(--text2);margin-bottom:18px}
+  .rest-chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+  .rest-chip{padding:5px 12px;border:1px solid var(--border2);border-radius:20px;font-size:12px;color:var(--text2);background:var(--bg2)}
+
+  /* COMPLETE */
+  .complete-banner{background:rgba(61,223,130,.07);border:1px solid rgba(61,223,130,.22);border-radius:11px;padding:16px 20px;text-align:center;margin-top:18px}
+  .complete-banner-title{font-family:var(--font-display);font-size:21px;font-weight:800;color:var(--green);letter-spacing:.04em}
+  .complete-banner-sub{font-size:12px;color:var(--text2);margin-top:3px}
+
+  /* TIMER */
+  .timer-overlay{position:fixed;bottom:22px;right:22px;background:var(--bg2);border:1px solid var(--border2);border-radius:15px;padding:15px 18px;width:220px;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,.65);transform:translateY(130%);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1)}
+  .timer-overlay.visible{transform:translateY(0);opacity:1}
+  .timer-overlay-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+  .timer-overlay-ex{font-family:var(--font-display);font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .timer-ring-wrap{position:relative;display:flex;justify-content:center;margin-bottom:7px}
+  .timer-ring{width:90px;height:90px;transform:rotate(-90deg)}
+  .timer-ring-bg{fill:none;stroke:var(--bg4);stroke-width:6}
+  .timer-ring-fill{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+  .timer-ring-fill.urgent{stroke:var(--orange)}
+  .timer-ring-fill.done-ring{stroke:var(--green)}
+  .timer-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--accent);letter-spacing:.02em}
+  .timer-center.urgent{color:var(--orange);animation:pulse .5s ease-in-out infinite}
+  .timer-center.done{color:var(--green);animation:none}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .timer-prog-bar{height:3px;background:var(--bg4);border-radius:2px;margin-bottom:9px;overflow:hidden}
+  .timer-prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .9s linear}
+  .timer-prog-fill.urgent{background:var(--orange)}
+  .timer-controls{display:flex;gap:6px}
+  .timer-btn{flex:1;padding:6px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--font-body);font-weight:500;transition:all .15s;text-align:center}
+  .timer-btn:hover{background:var(--bg4);color:var(--text)}
+  .timer-btn.primary{background:rgba(232,255,71,.08);border-color:rgba(232,255,71,.25);color:var(--accent)}
+  .timer-btn.skip:hover{border-color:var(--red);color:var(--red)}
+
+  /* NOTIFICATION */
+  .notif{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--bg2);border:1px solid var(--border2);border-radius:9px;padding:8px 16px;font-size:12px;color:var(--text2);z-index:300;transition:transform .3s cubic-bezier(.4,0,.2,1);white-space:nowrap;pointer-events:none}
+  .notif.show{transform:translateX(-50%) translateY(0)}
+  .notif-icon{color:var(--green);margin-right:5px}
+
+  @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .content>*{animation:fadein .22s ease both}
+  .content>*:nth-child(2){animation-delay:.05s}
+  .content>*:nth-child(3){animation-delay:.09s}
+  .content>*:nth-child(4){animation-delay:.13s}
+  .content>*:nth-child(5){animation-delay:.17s}
+
+  @media(max-width:680px){
+    .sidebar{width:64px}
+    .sidebar-header{padding:10px 6px}
+    .logo,.logo span,.week-tip,.week-label,.sync-text,.day-info,.day-progress-mini{display:none}
+    .week-control{justify-content:center}
+    .sync-bar{justify-content:center;gap:4px}
+    .day-btn{padding:8px;justify-content:center}
+    .topbar{padding:12px 14px}.day-title{font-size:24px}
+    .content{padding:12px 14px 32px}
+    .timer-overlay{right:8px;bottom:8px;width:180px}
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="setup-screen" id="setupScreen">
+  <div class="setup-card">
+    <div class="setup-logo">IRON LOG<span>Home Workout Tracker</span></div>
+
+    <div class="setup-title">Connect Google Drive Sync</div>
+    <div class="setup-sub">Your progress will auto-save to <strong>ironlog_progress.json</strong> inside a <strong>Workout Tracker</strong> folder in your Drive after every set. One-time setup takes ~10 minutes.</div>
+
+    <div class="setup-note">⚡ You only need to do this once. After setup, just open the file and it syncs automatically.</div>
+
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="setup-step-num">1</div>
+        <div class="setup-step-text">Go to <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> → Click <strong>Select a project</strong> → <strong>New Project</strong> → Name it <strong>IronLog</strong> → Create</div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-step-num">2</div>
+        <div class="setup-step-text">In the left menu → <strong>APIs &amp; Services → Library</strong> → Search <strong>Google Drive API</strong> → Click it → <strong>Enable</strong></div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-step-num">3</div>
+        <div class="setup-step-text"><strong>APIs &amp; Services → OAuth consent screen</strong> → Choose <strong>External</strong> → Fill app name (IronLog) → Add your Gmail as test user → Save</div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-step-num">4</div>
+        <div class="setup-step-text"><strong>Credentials → Create Credentials → OAuth 2.0 Client ID</strong> → Application type: <strong>Web application</strong> → Under <strong>Authorised JavaScript origins</strong> add your hosted URL (e.g. <strong>https://yourname.netlify.app</strong>) → Create</div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-step-num">5</div>
+        <div class="setup-step-text">Copy the <strong>Client ID</strong> (looks like: 123456-abc...apps.googleusercontent.com) and paste below</div>
+      </div>
+    </div>
+
+    <div class="setup-input-label">Google OAuth Client ID</div>
+    <input class="setup-input" id="clientIdInput" type="text" placeholder="123456789-abc...apps.googleusercontent.com" />
+    <button class="setup-btn" id="connectBtn" onclick="doConnect()">Connect &amp; Sign In to Google Drive</button>
+
+    <div class="setup-divider">or skip for now</div>
+    <button class="setup-btn-alt" onclick="useOffline()">Use Offline Mode (saves in browser only)</button>
+
+    <div class="setup-error" id="setupError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="mainApp" style="display:none">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">IRON LOG<span>Workout Tracker</span></div>
+      <div class="week-control">
+        <button class="wk-btn" onclick="changeWeek(-1)">&#8592;</button>
+        <span class="week-label" id="weekLabel">Week 1</span>
+        <button class="wk-btn" onclick="changeWeek(1)">&#8594;</button>
+      </div>
+    </div>
+    <div class="week-tip" id="weekTip"></div>
+    <div class="sync-bar">
+      <div class="sync-dot offline" id="syncDot"></div>
+      <span class="sync-text" id="syncText">Not connected</span>
+      <button class="icon-btn" onclick="manualSync()" title="Sync now">↻</button>
+      <button class="icon-btn danger" onclick="signOut()" title="Sign out / reset">✕</button>
+    </div>
+    <div class="day-list" id="dayList"></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="day-title" id="mainTitle"></div>
+        <div class="day-subtitle" id="mainSub"></div>
+      </div>
+      <div class="topbar-right">
+        <div class="progress-pill" id="progressPill"><span>0</span>/0 sets</div>
+        <button class="reset-btn" onclick="resetDay()">Reset day</button>
+      </div>
+    </div>
+    <div class="main-progress"><div class="main-progress-fill" id="mainProgressFill" style="width:0%"></div></div>
+    <div class="content" id="mainContent"></div>
+  </main>
+</div>
+
+<!-- TIMER -->
+<div class="timer-overlay" id="timerOverlay">
+  <div class="timer-overlay-label">Rest Timer</div>
+  <div class="timer-overlay-ex" id="timerExName"></div>
+  <div class="timer-ring-wrap">
+    <svg class="timer-ring" viewBox="0 0 100 100">
+      <circle class="timer-ring-bg" cx="50" cy="50" r="42"/>
+      <circle class="timer-ring-fill" id="timerRingFill" cx="50" cy="50" r="42" stroke-dasharray="263.9" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-center" id="timerCenter">—</div>
+  </div>
+  <div class="timer-prog-bar"><div class="timer-prog-fill" id="timerProgFill" style="width:100%"></div></div>
+  <div class="timer-controls">
+    <button class="timer-btn primary" id="timerToggle" onclick="toggleTimer()">Pause</button>
+    <button class="timer-btn" onclick="addTime(15)">+15s</button>
+    <button class="timer-btn skip" onclick="skipTimer()">Skip</button>
+  </div>
+</div>
+
+<div class="notif" id="notif"><span class="notif-icon">✓</span><span id="notifText"></span></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────
+const WEEK_TIPS=[
+  "Focus on form. Learn the movements. No rushing.",
+  "Increase reps by 1–2. Reduce rest 90s→75s.",
+  "Add 1 extra set. Use 3-1-1 tempo throughout.",
+  "Pause reps — hold 2 sec at hardest point.",
+  "Shorten rest to 60s. Master slow eccentrics.",
+  "Superset push + pull exercises back-to-back.",
+  "4-2-1 tempo on all pressing movements.",
+  "Test: max clean push-ups in 2 minutes.",
+  "Reduce rest to 45s on all isolation work.",
+  "Add a 4th set to your weakest exercise.",
+  "Full max-effort week — push every set near failure.",
+  "Deload: 50% volume. Let the body fully recover."
+];
+const WARMUP=["Arm circles 30s","Jumping jacks 45s","BW squats 10","Shoulder rotations 30s","Hip circles 30s","High knees 30s"];
+const DAYS=[
+  {label:"MON",name:"Upper Body A",sub:"Push · Pull · Shoulders · Triceps · Core",color:"blue",type:"workout",groups:[
+    {name:"Chest & Back",exercises:[
+      {id:"m1",name:"Dumbbell Floor Press",muscle:"Chest",sets:3,reps:"10–12",rest:75,note:"Elbows at 45°, lower slow 3 sec"},
+      {id:"m2",name:"Bent Over Rows (Rod)",muscle:"Back",sets:3,reps:"10–12",rest:75,note:"Chest up, pull bar to lower ribs"},
+      {id:"m3",name:"Push-Ups",muscle:"Chest",sets:3,reps:"Max clean",rest:60,note:"Full range — no half reps"},
+    ]},
+    {name:"Shoulders",exercises:[
+      {id:"m4",name:"Dumbbell Shoulder Press",muscle:"Shoulders",sets:3,reps:"10",rest:75,note:"Don't lock elbows at top"},
+      {id:"m5",name:"Lateral Raises",muscle:"Side Delts",sets:3,reps:"12–15",rest:60,note:"Slight elbow bend if 5kg feels heavy"},
+    ]},
+    {name:"Triceps",exercises:[
+      {id:"m6",name:"Overhead DB Extension",muscle:"Triceps",sets:3,reps:"12",rest:60,note:"Keep elbows close to head"},
+    ]},
+    {name:"Core",exercises:[
+      {id:"m7",name:"Plank",muscle:"Core",sets:3,reps:"30–45s",rest:45,note:"Squeeze glutes + abs, don't sag"},
+      {id:"m8",name:"Bicycle Crunches",muscle:"Core",sets:2,reps:"15 each",rest:45,note:"Slow controlled rotation",isNew:true},
+    ]},
+  ]},
+  {label:"TUE",name:"Lower Body",sub:"Quads · Hamstrings · Glutes · Calves · Core",color:"teal",type:"workout",groups:[
+    {name:"Legs",exercises:[
+      {id:"t1",name:"Goblet / Front Squats (Rod)",muscle:"Quads",sets:4,reps:"12",rest:90,note:"Knees over toes, chest tall, sit back"},
+      {id:"t2",name:"Romanian Deadlift (Rod)",muscle:"Hamstrings",sets:3,reps:"10–12",rest:90,note:"Hip hinge, soft knee, bar close to legs"},
+      {id:"t3",name:"Lunges",muscle:"Thighs",sets:3,reps:"10 each",rest:75,note:"Back knee nearly touches floor"},
+      {id:"t4",name:"Calf Raises",muscle:"Calves",sets:4,reps:"15–20",rest:45,note:"Use a step edge for full range"},
+    ]},
+    {name:"Core",exercises:[
+      {id:"t5",name:"Leg Raises",muscle:"Lower Abs",sets:3,reps:"12",rest:45,note:"Lower back pressed to floor"},
+      {id:"t6",name:"Plank",muscle:"Core",sets:2,reps:"30s",rest:45,note:"Added for core consistency",isNew:true},
+    ]},
+  ]},
+  {label:"WED",name:"Rest Day",sub:"Light walk or complete rest",color:"gray",type:"rest",restNote:"Keep it easy. Muscles are repairing and growing.",tips:["5–10 min easy walk","Gentle full-body stretch","Stay hydrated","No alcohol — hurts recovery","Sleep 7–8 hrs tonight"]},
+  {label:"THU",name:"Upper Body B",sub:"Back · Arms · Shoulders · Core",color:"purple",type:"workout",groups:[
+    {name:"Back",exercises:[
+      {id:"h1",name:"One-Arm Dumbbell Row",muscle:"Mid-Back",sets:4,reps:"10–12 each",rest:75,note:"Pull elbow behind torso, not out sideways"},
+    ]},
+    {name:"Shoulders",exercises:[
+      {id:"h2",name:"Lateral Raises",muscle:"Side Delts",sets:3,reps:"12–15",rest:60,note:"Lead with elbows, not wrists"},
+      {id:"h3",name:"Front Raises",muscle:"Front Delts",sets:3,reps:"12",rest:60,note:"Stop at shoulder height only"},
+    ]},
+    {name:"Arms",exercises:[
+      {id:"h4",name:"Dumbbell Curls",muscle:"Biceps",sets:3,reps:"12",rest:60,note:"No swinging — control the lowering"},
+      {id:"h5",name:"Hammer Curls",muscle:"Biceps/Forearms",sets:3,reps:"12",rest:60,note:"Palms face each other throughout"},
+    ]},
+    {name:"Core (added)",exercises:[
+      {id:"h6",name:"Dead Bugs",muscle:"Deep Core",sets:3,reps:"10 each",rest:45,note:"Lower back flat on floor",isNew:true},
+      {id:"h7",name:"Bicycle Crunches",muscle:"Obliques",sets:2,reps:"15 each",rest:45,note:"Slow and controlled",isNew:true},
+    ]},
+    {name:"Chest Finisher",exercises:[
+      {id:"h8",name:"Push-Ups",muscle:"Chest",sets:2,reps:"Near failure",rest:60,note:"Go until form breaks down"},
+    ]},
+  ]},
+  {label:"FRI",name:"Full Body",sub:"Conditioning + Strength",color:"coral",type:"workout",groups:[
+    {name:"Compound",exercises:[
+      {id:"f1",name:"Barbell Squats (Rod)",muscle:"Quads/Glutes",sets:3,reps:"15",rest:90,note:"3 sec down, 1 sec pause, drive up"},
+      {id:"f2",name:"Dumbbell Deadlift",muscle:"Posterior Chain",sets:3,reps:"12",rest:90,note:"Hinge at hips, back stays neutral"},
+    ]},
+    {name:"Upper Body",exercises:[
+      {id:"f3",name:"Shoulder Press",muscle:"Shoulders",sets:3,reps:"10",rest:75,note:"Exhale forcefully on the press"},
+      {id:"f4",name:"Bent Over Row (Rod)",muscle:"Back",sets:3,reps:"10",rest:75,note:"Pause 1 sec at top of every pull"},
+    ]},
+    {name:"Arms",exercises:[
+      {id:"f5",name:"Dumbbell Curl",muscle:"Biceps",sets:2,reps:"12",rest:60,note:"Slow eccentric — 3 sec lowering"},
+      {id:"f6",name:"Overhead Tricep Ext.",muscle:"Triceps",sets:2,reps:"12",rest:60,note:"Pause at stretch for peak tension"},
+    ]},
+    {name:"Conditioning",exercises:[
+      {id:"f7",name:"Mountain Climbers",muscle:"Cardio/Core",sets:3,reps:"30s",rest:45,note:"Keep hips level — fast controlled pace"},
+      {id:"f8",name:"Jumping Jacks",muscle:"Cardio",sets:2,reps:"30s",rest:30,note:"Light conditioning finisher",isNew:true},
+    ]},
+  ]},
+  {label:"SAT",name:"Stretching Day",sub:"Focus on tight areas",color:"gray",type:"rest",restNote:"Mobility work today = better performance next week.",tips:["Hip flexor stretch 60s each","Chest & shoulder opener","Hamstring stretch","Cat-cow spine mobility","Quad stretch 45s each","Thoracic rotation"]},
+  {label:"SUN",name:"Optional",sub:"Light cardio or complete rest",color:"gray",type:"rest",restNote:"Listen to your body. Only train if you feel good.",tips:["Easy 20 min walk","Light cycling","Foam roll if available","Plan next week's nutrition"]},
+];
+
+// ── STATE ─────────────────────────────────────────
+let currentWeek=1, currentDay=0, setsData={}, driveFileId=null;
+let CLIENT_ID='', accessToken=null, offlineMode=false;
+let syncQueue=null;
+let timerInterval=null, timerSec=0, timerTotal=0, timerRunning=false;
+const CIRCUM=263.9;
+
+function key(w,d,id,s){return `${w}_${d}_${id}_${s}`}
+
+// ── SETUP ─────────────────────────────────────────
+function doConnect(){
+  const val=document.getElementById('clientIdInput').value.trim();
+  if(!val||!val.includes('googleusercontent.com')){setErr('Paste a valid Client ID ending in .apps.googleusercontent.com');return;}
+  CLIENT_ID=val;
+  localStorage.setItem('il_cid',CLIENT_ID);
+  document.getElementById('connectBtn').disabled=true;
+  document.getElementById('connectBtn').textContent='Loading Google…';
+  loadGoogleLibs();
+}
+function useOffline(){offlineMode=true;localStorage.setItem('il_off','1');bootApp()}
+function setErr(m){const e=document.getElementById('setupError');e.textContent=m;e.style.display='block'}
+
+// ── GOOGLE LIBS ───────────────────────────────────
+let gapiOk=false, gsiOk=false, tokenClient=null;
+function loadGoogleLibs(){
+  const s1=document.createElement('script');s1.src='https://apis.google.com/js/api.js';
+  s1.onload=()=>gapi.load('client',()=>{gapi.client.init({}).then(()=>{gapiOk=true;tryAuth()})});
+  s1.onerror=()=>setErr('Failed to load Google API. Check your internet connection.');
+  document.head.appendChild(s1);
+  const s2=document.createElement('script');s2.src='https://accounts.google.com/gsi/client';
+  s2.onload=()=>{
+    tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:CLIENT_ID,
+      scope:'https://www.googleapis.com/auth/drive.file',
+      callback:(r)=>{
+        if(r.error){setErr('Google sign-in failed: '+r.error);document.getElementById('connectBtn').disabled=false;document.getElementById('connectBtn').textContent='Connect & Sign In to Google Drive';return;}
+        accessToken=r.access_token;
+        gapi.client.setToken({access_token:accessToken});
+        bootApp();
+        loadFromDrive();
+      }
+    });
+    gsiOk=true;tryAuth();
+  };
+  document.head.appendChild(s2);
+}
+function tryAuth(){if(gapiOk&&gsiOk&&tokenClient)tokenClient.requestAccessToken({prompt:'consent'})}
+
+function signOut(){
+  if(accessToken)try{google.accounts.oauth2.revoke(accessToken,()=>{})}catch(e){}
+  localStorage.removeItem('il_cid');localStorage.removeItem('il_off');
+  location.reload();
+}
+function manualSync(){
+  if(offlineMode){notify('Offline mode — no Drive sync');return}
+  if(!accessToken){notify('Not signed in to Drive');return}
+  saveToDrive();
+}
+
+// ── DRIVE ─────────────────────────────────────────
+async function getFolderId(){
+  const r=await gapi.client.request({path:'https://www.googleapis.com/drive/v3/files',method:'GET',
+    params:{q:"name='Workout Tracker' and mimeType='application/vnd.google-apps.folder' and trashed=false",fields:'files(id)'}});
+  if(r.result.files.length)return r.result.files[0].id;
+  const c=await gapi.client.request({path:'https://www.googleapis.com/drive/v3/files',method:'POST',
+    body:JSON.stringify({name:'Workout Tracker',mimeType:'application/vnd.google-apps.folder'})});
+  return c.result.id;
+}
+async function loadFromDrive(){
+  setSyncUI('syncing','Loading from Drive…');
+  try{
+    const fid=await getFolderId();
+    const r=await gapi.client.request({path:'https://www.googleapis.com/drive/v3/files',method:'GET',
+      params:{q:`name='ironlog_progress.json' and '${fid}' in parents and trashed=false`,fields:'files(id)'}});
+    if(r.result.files.length){
+      driveFileId=r.result.files[0].id;
+      const content=await gapi.client.request({path:`https://www.googleapis.com/drive/v3/files/${driveFileId}`,params:{alt:'media'}});
+      const data=typeof content.result==='string'?JSON.parse(content.result):content.result;
+      setsData=data.sets||{};currentWeek=data.week||1;
+      document.getElementById('weekLabel').textContent='Week '+currentWeek;
+      setTip();renderSidebar();renderMain();
+      setSyncUI('synced','Synced with Drive');notify('Progress loaded from Drive ✓');
+    }else{setSyncUI('synced','Connected — no save file yet');}
+  }catch(e){setSyncUI('error','Drive error — saved locally');console.error(e)}
+}
+async function saveToDrive(){
+  const payload=JSON.stringify({sets:setsData,week:currentWeek,at:new Date().toISOString()});
+  localStorage.setItem('il_data',payload);
+  if(offlineMode||!accessToken){setSyncUI('synced','Saved locally');return}
+  setSyncUI('syncing','Saving…');
+  try{
+    if(!driveFileId){
+      const fid=await getFolderId();
+      const form=new FormData();
+      form.append('metadata',new Blob([JSON.stringify({name:'ironlog_progress.json',parents:[fid]})],{type:'application/json'}));
+      form.append('file',new Blob([payload],{type:'application/json'}));
+      const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {method:'POST',headers:{Authorization:'Bearer '+accessToken},body:form});
+      driveFileId=(await res.json()).id;
+    }else{
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+        {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:payload});
+    }
+    setSyncUI('synced','Saved to Drive · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){setSyncUI('error','Drive error — saved locally');console.error(e)}
+}
+function scheduleSave(){clearTimeout(syncQueue);syncQueue=setTimeout(saveToDrive,700)}
+function setSyncUI(status,text){
+  document.getElementById('syncDot').className='sync-dot '+status;
+  document.getElementById('syncText').textContent=text;
+}
+
+// ── BOOT ──────────────────────────────────────────
+function bootApp(){
+  document.getElementById('setupScreen').style.display='none';
+  document.getElementById('mainApp').style.display='flex';
+  const saved=localStorage.getItem('il_data');
+  if(saved){try{const d=JSON.parse(saved);setsData=d.sets||{};currentWeek=d.week||1;}catch(e){}}
+  document.getElementById('weekLabel').textContent='Week '+currentWeek;
+  if(offlineMode)setSyncUI('offline','Offline mode');
+  setTip();
+  currentDay=[6,0,1,2,3,4,5][new Date().getDay()];
+  renderSidebar();renderMain();
+}
+function setTip(){
+  const i=Math.min(currentWeek-1,WEEK_TIPS.length-1);
+  document.getElementById('weekTip').innerHTML='<strong>Focus:</strong> '+WEEK_TIPS[i];
+}
+
+// ── WEEK ──────────────────────────────────────────
+function changeWeek(d){
+  currentWeek=Math.max(1,Math.min(12,currentWeek+d));
+  document.getElementById('weekLabel').textContent='Week '+currentWeek;
+  setTip();renderSidebar();renderMain();scheduleSave();
+}
+
+// ── SIDEBAR ───────────────────────────────────────
+function renderSidebar(){
+  document.getElementById('dayList').innerHTML=DAYS.map((d,i)=>{
+    const{done,total}=getProgress(i);
+    const pct=total>0?done/total*100:0;
+    const isDone=total>0&&done===total;
+    const cls=['day-btn',d.type==='rest'?'rest-btn':'',i===currentDay?'active':'',isDone?'done':''].join(' ');
+    return `<button class="${cls}" onclick="selectDay(${i})">
+      <div class="day-dot ${d.color}">${d.label}</div>
+      <div class="day-info">
+        <div class="day-info-label">${d.name}</div>
+        <div class="day-info-sub">${d.type==='rest'?'Rest':done+'/'+total+' sets'}</div>
+      </div>
+      <div class="day-progress-mini"><div class="day-progress-mini-fill" style="width:${pct}%"></div></div>
+    </button>`;
+  }).join('');
+}
+function getProgress(di){
+  const d=DAYS[di];if(d.type==='rest')return{done:0,total:0};
+  let t=0,dn=0;
+  d.groups.forEach(g=>g.exercises.forEach(e=>{for(let s=0;s<e.sets;s++){t++;if(setsData[key(currentWeek,di,e.id,s)])dn++;}}));
+  return{done:dn,total:t};
+}
+function selectDay(i){currentDay=i;renderSidebar();renderMain()}
+function resetDay(){
+  const d=DAYS[currentDay];if(d.type==='rest')return;
+  d.groups.forEach(g=>g.exercises.forEach(e=>{for(let s=0;s<e.sets;s++)delete setsData[key(currentWeek,currentDay,e.id,s)]}));
+  renderMain();renderSidebar();scheduleSave();notify('Day reset');
+}
+
+// ── RENDER ────────────────────────────────────────
+function renderMain(){
+  const d=DAYS[currentDay];
+  document.getElementById('mainTitle').textContent=d.name;
+  document.getElementById('mainSub').textContent=d.sub;
+  updateProg();
+  if(d.type==='rest'){
+    document.getElementById('mainContent').innerHTML=`<div class="rest-day-view">
+      <div class="rest-icon">😴</div>
+      <div class="rest-day-title">${d.name}</div>
+      <div class="rest-day-sub">${d.restNote}</div>
+      <div class="rest-chips">${d.tips.map(t=>`<span class="rest-chip">${t}</span>`).join('')}</div>
+    </div>`;return;
+  }
+  const{done,total}=getProgress(currentDay);
+  let h='';
+  h+=`<div class="warmup-bar"><span class="warmup-label">🔥 Warm Up</span><div class="warmup-tags">${WARMUP.map(w=>`<span class="warmup-tag">${w}</span>`).join('')}</div></div>`;
+  h+=`<div class="stat-row">
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-label">Total Sets</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${done}</div><div class="stat-label">Done</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--orange)">${total-done}</div><div class="stat-label">Left</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${Math.round(done/total*100)||0}%</div><div class="stat-label">Progress</div></div>
+  </div>`;
+  d.groups.forEach(g=>{
+    h+=`<div class="section-title">${g.name}</div>`;
+    g.exercises.forEach(ex=>{
+      const allDone=Array.from({length:ex.sets},(_,s)=>setsData[key(currentWeek,currentDay,ex.id,s)]).every(Boolean);
+      let sh='';
+      for(let s=0;s<ex.sets;s++){
+        const k=key(currentWeek,currentDay,ex.id,s),isDone=!!setsData[k];
+        const cls=isDone?(allDone?'set-btn all-done':'set-btn done'):'set-btn';
+        sh+=`<button class="${cls}" onclick="toggleSet('${ex.id}',${s},${ex.rest},'${ex.name.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">
+          <span class="set-btn-num">${isDone?'✓':(s+1)}</span>
+          <span class="set-btn-label">${isDone?'done':'set'}</span>
+        </button>`;
+      }
+      h+=`<div class="ex-card${allDone?' ex-done':''}">
+        <div class="ex-card-header">
+          <div style="flex:1">
+            <div class="ex-name">${ex.name}</div>
+            <div class="ex-tags">
+              <span class="ex-tag muscle">${ex.muscle}</span>
+              <span class="ex-tag scheme">${ex.sets}×${ex.reps}</span>
+              <span class="ex-tag scheme">Rest ${ex.rest}s</span>
+              ${ex.isNew?'<span class="ex-tag new-tag">NEW</span>':''}
+            </div>
+            <div class="ex-note">${ex.note}</div>
+          </div>
+          <div class="ex-done-badge">✓</div>
+        </div>
+        <div class="sets-area">${sh}</div>
+      </div>`;
+    });
+  });
+  if(done===total&&total>0)h+=`<div class="complete-banner">
+    <div class="complete-banner-title">🏆 Workout Complete!</div>
+    <div class="complete-banner-sub">Great session. Eat protein, hydrate, sleep 7–8 hrs.</div>
+  </div>`;
+  document.getElementById('mainContent').innerHTML=h;
+  updateProg();
+}
+function updateProg(){
+  const{done,total}=getProgress(currentDay);
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('mainProgressFill').style.width=pct+'%';
+  document.getElementById('progressPill').innerHTML=`<span>${done}</span>/${total} sets`;
+}
+
+// ── SETS ──────────────────────────────────────────
+function toggleSet(exId,s,rest,name){
+  const k=key(currentWeek,currentDay,exId,s);
+  const was=!!setsData[k];setsData[k]=!was;
+  if(!was)startTimer(rest,name);
+  renderMain();renderSidebar();scheduleSave();
+}
+
+// ── TIMER ─────────────────────────────────────────
+function startTimer(sec,name){
+  if(timerInterval)clearInterval(timerInterval);
+  timerTotal=sec;timerSec=sec;timerRunning=true;
+  document.getElementById('timerExName').textContent='After: '+name;
+  document.getElementById('timerToggle').textContent='Pause';
+  document.getElementById('timerOverlay').classList.add('visible');
+  updateTimerUI();
+  timerInterval=setInterval(()=>{
+    if(!timerRunning)return;
+    timerSec--;
+    if(timerSec<=0){timerSec=0;updateTimerUI();clearInterval(timerInterval);timerInterval=null;timerRunning=false;onTimerEnd();}
+    else updateTimerUI();
+  },1000);
+}
+function updateTimerUI(){
+  const pct=timerTotal>0?timerSec/timerTotal:0;
+  const offset=CIRCUM*(1-pct);
+  const urgent=timerSec<=10&&timerSec>0,done=timerSec===0;
+  const ring=document.getElementById('timerRingFill');
+  ring.style.strokeDashoffset=offset;
+  ring.className='timer-ring-fill'+(done?' done-ring':urgent?' urgent':'');
+  const m=Math.floor(timerSec/60),s=timerSec%60;
+  const txt=done?'GO!':(m>0?m+':'+String(s).padStart(2,'0'):String(s));
+  const c=document.getElementById('timerCenter');
+  c.textContent=txt;c.className='timer-center'+(done?' done':urgent?' urgent':'');
+  const pf=document.getElementById('timerProgFill');
+  pf.style.width=(pct*100)+'%';pf.className='timer-prog-fill'+(urgent?' urgent':'');
+  document.getElementById('timerToggle').textContent=timerRunning?'Pause':'Resume';
+}
+function onTimerEnd(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [0,.15,.3].forEach((dl,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=i<2?880:1320;
+      g.gain.setValueAtTime(.3,ctx.currentTime+dl);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dl+.2);
+      o.start(ctx.currentTime+dl);o.stop(ctx.currentTime+dl+.25);
+    });
+  }catch(e){}
+  notify('Rest done — next set!');
+  setTimeout(()=>document.getElementById('timerOverlay').classList.remove('visible'),3000);
+}
+function toggleTimer(){timerRunning=!timerRunning;updateTimerUI()}
+function addTime(s){
+  timerSec+=s;timerTotal=Math.max(timerTotal,timerSec);
+  if(!timerRunning&&timerSec>0){
+    timerRunning=true;
+    if(!timerInterval){timerInterval=setInterval(()=>{
+      if(!timerRunning)return;timerSec--;
+      if(timerSec<=0){timerSec=0;updateTimerUI();clearInterval(timerInterval);timerInterval=null;timerRunning=false;onTimerEnd();}
+      else updateTimerUI();
+    },1000);}
+  }
+  updateTimerUI();
+}
+function skipTimer(){if(timerInterval)clearInterval(timerInterval);timerInterval=null;timerRunning=false;timerSec=0;document.getElementById('timerOverlay').classList.remove('visible')}
+
+// ── NOTIFY ────────────────────────────────────────
+let notifT;
+function notify(m){
+  const el=document.getElementById('notif');
+  document.getElementById('notifText').textContent=m;
+  el.classList.add('show');clearTimeout(notifT);
+  notifT=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// ── INIT ──────────────────────────────────────────
+(function(){
+  if(localStorage.getItem('il_off')){offlineMode=true;bootApp();return}
+  const cid=localStorage.getItem('il_cid');
+  if(cid){
+    CLIENT_ID=cid;
+    document.getElementById('clientIdInput').value=cid;
+    loadGoogleLibs();
+    bootApp();
+    return;
+  }
+  // show setup
+})();
+</script>
+</body>
+</html>
